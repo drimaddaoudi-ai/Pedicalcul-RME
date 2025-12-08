@@ -107,7 +107,7 @@ with col_id3:
 col_p1, col_p2 = st.columns(2)
 with col_p1:
     age_years = st.number_input("Âge (années si >= 2 ans)", 0, 16, 0)
-    age_months = st.number_input("Mois (si < 2 ans)", 0, 11, 0)
+    age_months = st.number_input("Mois (si < 2 ans)", 0, 23, 0)
 
 # Calcul Poids APLS
 if age_years == 0:
@@ -122,9 +122,25 @@ else:
 with col_p2:
     st.info(f"Poids théorique calculé : **{poids_estime} kg**")
     poids_retenu = st.number_input("Poids RETENU (kg)", value=float(poids_estime), step=0.5)
+# ... (votre code d'identification juste au-dessus) ...
+with col_p2:
+    st.info(f"Poids théorique calculé : **{poids_estime} kg**")
+    poids_retenu = st.number_input("Poids RETENU (kg)", value=float(poids_estime), step=0.5)
+
+# --- AJOUT DU DISCLAIMER ICI ---
+st.warning("""
+⚠️ **AVERTISSEMENT :** * Cette application est destinée **exclusivement** à un usage interne au service de **Réanimation Mère-Enfant**.
+* Elle constitue une aide au calcul et ne remplace en aucun moment le **jugement clinique**.
+* Le praticien reste seul responsable de la vérification des doses avant administration.
+""")
+# -------------------------------
 
 # Dictionnaire pour stocker les DataFrames pour le PDF
 pdf_data_store = {}
+
+# ... (la suite du code : if poids_retenu > 0: ...) ...
+
+
 
 # --- BOUTON PDF (Visible seulement si poids validé) ---
 if poids_retenu > 0:
@@ -183,7 +199,7 @@ if poids_retenu > 0:
     # Les plages sont des approximations cliniques pour l'urgence
     if age_years < 1:
         # Nourrisson (1 mois - 1 an)
-        fc_range = "100 - 160 bpm"
+        fc_range = "100 - 150 bpm"
         fr_range_val = (30, 60) # Tuple (min, max) pour calculs
         pas_range = "70 - 90 mmHg"
         pad_range = "40 - 55 mmHg"
@@ -192,7 +208,7 @@ if poids_retenu > 0:
         
     elif 1 <= age_years <= 3:
         # Bambin (Toddler)
-        fc_range = "90 - 150 bpm"
+        fc_range = "90 - 140 bpm"
         fr_range_val = (24, 40)
         pas_range = "80 - 100 mmHg"
         pad_range = "50 - 65 mmHg"
@@ -201,7 +217,7 @@ if poids_retenu > 0:
         
     elif 4 <= age_years <= 5:
         # Préscolaire
-        fc_range = "80 - 140 bpm"
+        fc_range = "80 - 130 bpm"
         fr_range_val = (22, 34)
         pas_range = "80 - 110 mmHg"
         pad_range = "55 - 70 mmHg"
@@ -543,7 +559,7 @@ if poids_retenu > 0:
     restr_rate = round(base_rate * 2/3, 1)
     restr_daily = round(base_daily * 2/3, 0)
     
-    st.success("**Composition :** G5% + 4.5g NaCl/l + 1g KCl/l")
+    st.success("**Composition :** G5% + 4.5g NaCl + 1g KCl")
     if is_capped: st.warning("⚠️ Plafonné à 2500 ml/j")
     
     df_base = pd.DataFrame({
@@ -608,7 +624,7 @@ if poids_retenu > 0:
         ("Dexaméthasone", 0.2, "mg", "/ jour"),
         ("Furosémide", 1.0, "mg", "/ 6-12h"),
         ("Acide Tranex", 20.0, "mg", "(Bolus 15 min)"),
-        ("Bicar 1.4%", 25.0, "ml", "(Bolus lent)"),
+        ("Bicar 1.4%", 6.0, "ml", "(Bolus lent, à répéter si nécessaire)"),
         ("SSH 3%", 3.0, "ml", "(Bolus 20 min)")
     ]
     data_divers = []
@@ -648,4 +664,5 @@ if poids_retenu > 0:
             file_name=f"Fiche_Rea_{nom_patient.replace(' ', '_')}.pdf",
             mime="application/pdf",
             type="primary" 
+
         )
