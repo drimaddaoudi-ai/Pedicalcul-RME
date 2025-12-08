@@ -98,32 +98,52 @@ with col_id2:
 with col_id3:
     date_admission = st.date_input("Date d'admission", datetime.date.today())
 
-col_p1, col_p2 = st.columns(2)
-with col_p1:
-    # Modification: Années à partir de 0, Mois jusqu'à 23
-    age_years = st.number_input("Âge (années)", 0, 16, 0)
-    age_months = st.number_input("Mois", 0, 23, 0)
+# --- NOUVELLE LOGIQUE D'ÂGE EXCLUSIVE ---
+st.markdown("---")
+col_age_type, col_age_val, col_poids = st.columns([1, 1, 2])
 
-# --- NOUVELLE LOGIQUE DE CALCUL D'AGE ---
-# On convertit tout en "Mois totaux" et "Années réelles (float)" pour la logique médicale
-total_months = (age_years * 12) + age_months
-age_years_float = total_months / 12.0
+with col_age_type:
+    # Choix exclusif de l'unité
+    type_age = st.radio("Unité d'âge :", ["Mois (< 2 ans)", "Années (≥ 2 ans)"])
 
-# Calcul Poids APLS (Basé sur l'âge total corrigé)
+with col_age_val:
+    if type_age == "Mois (< 2 ans)":
+        # Saisie en MOIS uniquement (0 à 23 mois)
+        valeur_age = st.number_input("Âge (en mois)", min_value=0, max_value=23, value=6)
+        
+        # Conversion interne
+        total_months = valeur_age
+        age_years_float = total_months / 12.0
+        age_display = f"{valeur_age} mois"
+        
+        # Variables pour compatibilité avec le reste du code
+        age_years = 0
+        age_months = valeur_age
+
+    else:
+        # Saisie en ANNÉES uniquement (2 à 16 ans)
+        valeur_age = st.number_input("Âge (en années)", min_value=2, max_value=16, value=5)
+        
+        # Conversion interne
+        total_months = valeur_age * 12
+        age_years_float = float(valeur_age)
+        age_display = f"{valeur_age} ans"
+        
+        # Variables pour compatibilité
+        age_years = valeur_age
+        age_months = 0
+
+# Calcul Poids APLS (Basé sur l'âge total unifié)
 if total_months < 12:
-    # Nourrisson < 1 an : Formule mois
     poids_estime = (0.5 * total_months) + 4
 elif 12 <= total_months <= 60:
-    # 1 à 5 ans : Formule années (2 * Age + 8)
     poids_estime = (2.0 * age_years_float) + 8
 elif 60 < total_months <= 144:
-    # 6 à 12 ans
     poids_estime = (3.0 * age_years_float) + 7
 else:
-    # > 12 ans
     poids_estime = (3.0 * age_years_float) + 7
 
-with col_p2:
+with col_poids:
     st.info(f"Poids théorique calculé : **{round(poids_estime, 1)} kg**")
     poids_retenu = st.number_input("Poids RETENU (kg)", value=float(round(poids_estime, 1)), step=0.5)
 
@@ -655,6 +675,7 @@ if poids_retenu > 0:
             mime="application/pdf",
             type="primary" 
         )
+
 
 
 
