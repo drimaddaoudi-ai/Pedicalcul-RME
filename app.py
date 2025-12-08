@@ -10,7 +10,6 @@ st.set_page_config(page_title="Pédicalcul CHU Fès", layout="wide", page_icon="
 class PDF(FPDF):
     def header(self):
         # Paramètres : nom du fichier, x, y, largeur (en mm)
-        # Ajustez '33' pour changer la taille
         try:
             self.image('logo.png', 10, 8, 20) 
         except:
@@ -33,7 +32,7 @@ def create_pdf(patient_info, data_sections):
     # Info Patient
     pdf.set_font("Arial", size=11)
     pdf.cell(0, 8, f"Patient: {patient_info['nom']} | IP: {patient_info['ip']} | Admission: {patient_info['date_adm']}", ln=True)
-    pdf.cell(0, 8, f"Age: {patient_info['age']} | Poids: {patient_info['poids']} kg | Généré le: {datetime.datetime.now().strftime('%d/%m/%Y %H:%M')}", ln=True)
+    pdf.cell(0, 8, f"Age: {patient_info['age_str']} | Poids: {patient_info['poids']} kg | Généré le: {datetime.datetime.now().strftime('%d/%m/%Y %H:%M')}", ln=True)
     pdf.line(10, 30, 200, 30)
     pdf.ln(5)
     
@@ -78,14 +77,9 @@ def create_pdf(patient_info, data_sections):
 # INTERFACE UTILISATEUR (STREAMLIT)
 # ==========================================
 
-# ==========================================
-# INTERFACE UTILISATEUR (STREAMLIT)
-# ==========================================
-
 # Affichage du Logo sur le site (optionnel)
 col_logo, col_titre = st.columns([1, 5])
 with col_logo:
-    # Affiche l'image si elle existe, sinon rien
     try:
         st.image("logo.png", width=100)
     except:
@@ -106,46 +100,59 @@ with col_id3:
 
 col_p1, col_p2 = st.columns(2)
 with col_p1:
-    age_years = st.number_input("Âge (années si >= 2 ans)", 0, 16, 0)
-    age_months = st.number_input("Mois (si < 2 ans)", 0, 23, 0)
+    # Modification: Années à partir de 0, Mois jusqu'à 23
+    age_years = st.number_input("Âge (années)", 0, 16, 0)
+    age_months = st.number_input("Mois", 0, 23, 0)
 
-# Calcul Poids APLS
-if age_years == 0:
-    poids_estime = (0.5 * age_months) + 4
-elif 1 <= age_years <= 5:
-    poids_estime = (2.0 * age_years) + 8
-elif 6 <= age_years <= 12:
-    poids_estime = (3.0 * age_years) + 7
+# --- NOUVELLE LOGIQUE DE CALCUL D'AGE ---
+# On convertit tout en "Mois totaux" et "Années réelles (float)" pour la logique médicale
+total_months = (age_years * 12) + age_months
+age_years_float = total_months / 12.0
+
+# Calcul Poids APLS (Basé sur l'âge total corrigé)
+if total_months < 12:
+    # Nourrisson < 1 an : Formule mois
+    poids_estime = (0.5 * total_months) + 4
+elif 12 <= total_months <= 60:
+    # 1 à 5 ans : Formule années (2 * Age + 8)
+    poids_estime = (2.0 * age_years_float) + 8
+elif 60 < total_months <= 144:
+    # 6 à 12 ans
+    poids_estime = (3.0 * age_years_float) + 7
 else:
-    poids_estime = (3.0 * age_years) + 7
+    # > 12 ans
+    poids_estime = (3.0 * age_years_float) + 7
 
 with col_p2:
-    st.info(f"Poids théorique calculé : **{poids_estime} kg**")
-    poids_retenu = st.number_input("Poids RETENU (kg)", value=float(poids_estime), step=0.5)
-# ... (votre code d'identification juste au-dessus) ...
+    st.info(f"Poids théorique calculé : **{round(poids_estime, 1)} kg**")
+    poids_retenu = st.number_input("Poids RETENU (kg)", value=float(round(poids_estime, 1)), step=0.5)
 
-# --- AJOUT DU DISCLAIMER ICI ---
+# --- AJOUT DU DISCLAIMER ---
 st.warning("""
-⚠️ **AVERTISSEMENT :** * Cette application est destinée **exclusivement** à un usage interne au service de **Réanimation Mère-Enfant**.
+⚠️ **AVERTISSEMENT :** * Cette application est destinée **exclusivement** à un usage interne au service de **Réanimation Mère-Enfant** au CHU HASSAN II de Fès (Maroc).
 * Elle constitue une aide au calcul et ne remplace en aucun moment le **jugement clinique**.
 * Le praticien reste seul responsable de la vérification des doses avant administration.
 """)
-# -------------------------------
 
 # Dictionnaire pour stocker les DataFrames pour le PDF
 pdf_data_store = {}
 
-# ... (la suite du code : if poids_retenu > 0: ...) ...
-
-
-
 # --- BOUTON PDF (Visible seulement si poids validé) ---
 if poids_retenu > 0:
     st.markdown("---")
+    
+    # Texte âge propre pour le PDF
+    if age_years == 0:
+        age_display = f"{age_months} mois"
+    elif age_months == 0:
+        age_display = f"{age_years} ans"
+    else:
+        age_display = f"{age_years} ans et {age_months} mois"
+
     p_info = {
         "nom": nom_patient, "ip": ip_patient, 
         "date_adm": date_admission.strftime("%d/%m/%Y"),
-        "age": f"{age_years} ans {age_months} mois", "poids": poids_retenu
+        "age": age_display, "age_str": age_display, "poids": poids_retenu
     }
     
     pdf_button_placeholder = st.empty()
@@ -159,13 +166,19 @@ if poids_retenu > 0:
     # --- SECTION 1 : INTUBATION ---
     st.subheader("1. 🌬️ Intubation & Voies Aériennes")
     
-    if age_years < 2: lame = "Taille 1"
-    elif 2 <= age_years <= 5: lame = "Taille 2"
-    elif 6 <= age_years <= 12: lame = "Taille 2 ou 3"
+    # Logique basée sur total_months / age_years_float
+    if age_years_float < 2: lame = "Taille 1"
+    elif 2 <= age_years_float <= 5: lame = "Taille 2"
+    elif 5 < age_years_float <= 12: lame = "Taille 2 ou 3"
     else: lame = "Taille 3 ou 4"
 
-    if age_years < 1: sonde_id = 3.5
-    else: sonde_id = (age_years / 4.0) + 3.5
+    if total_months < 12: sonde_id = 3.5
+    else: sonde_id = (age_years_float / 4.0) + 3.5
+    
+    # Arrondi sonde à 0.5 le plus proche si besoin, ou garder float
+    # Généralement on garde une décimale ex: 4.1 -> 4.0, 4.4 -> 4.5. 
+    # Pour simplifier ici on affiche la valeur calculée arrondie à 1 décimale
+    sonde_id = round(sonde_id * 2) / 2 # Arrondi au 0.5 le plus proche si on veut être puriste, sinon round 1
     
     fixation = round(sonde_id * 3, 1)
     
@@ -189,22 +202,22 @@ if poids_retenu > 0:
     })
     st.table(df_intub.set_index("Paramètre"))
     pdf_data_store["1. Intubation"] = df_intub
-# --- SECTION 2 : PARAMÈTRES PHYSIOLOGIQUES ---
+
+    # --- SECTION 2 : PHYSIO ---
     st.subheader("2. 📊 Paramètres Physiologiques")
 
-    # A. Détermination des constantes normales selon l'âge (Sources : PALS 2020 & Lancet 2011)
-    # Les plages sont des approximations cliniques pour l'urgence
-    if age_years < 1:
-        # Nourrisson (1 mois - 1 an)
+    # A. Détermination des constantes normales selon l'âge TOTAL (Mois)
+    if total_months < 12:
+        # Nourrisson < 1 an
         fc_range = "100 - 150 bpm"
-        fr_range_val = (30, 60) # Tuple (min, max) pour calculs
+        fr_range_val = (30, 60)
         pas_range = "70 - 90 mmHg"
         pad_range = "40 - 55 mmHg"
         pam_range = "50 - 65 mmHg"
-        vol_sang_ratio = 80 # ml/kg
+        vol_sang_ratio = 80 
         
-    elif 1 <= age_years <= 3:
-        # Bambin (Toddler)
+    elif 12 <= total_months < 36:
+        # Bambin (1 à 3 ans)
         fc_range = "90 - 140 bpm"
         fr_range_val = (24, 40)
         pas_range = "80 - 100 mmHg"
@@ -212,17 +225,17 @@ if poids_retenu > 0:
         pam_range = "60 - 75 mmHg"
         vol_sang_ratio = 80
         
-    elif 4 <= age_years <= 5:
-        # Préscolaire
+    elif 36 <= total_months < 72:
+        # Préscolaire (3 à 6 ans)
         fc_range = "80 - 130 bpm"
         fr_range_val = (22, 34)
         pas_range = "80 - 110 mmHg"
         pad_range = "55 - 70 mmHg"
         pam_range = "65 - 80 mmHg"
-        vol_sang_ratio = 75 # Transition progressive
+        vol_sang_ratio = 75 
         
-    elif 6 <= age_years <= 12:
-        # Scolaire
+    elif 72 <= total_months < 144:
+        # Scolaire (6 à 12 ans)
         fc_range = "70 - 120 bpm"
         fr_range_val = (18, 30)
         pas_range = "90 - 120 mmHg"
@@ -240,20 +253,13 @@ if poids_retenu > 0:
         vol_sang_ratio = 75
 
     # B. Calculs Volumétriques
-    # Volume Courant (Vt) : 4 à 8 ml/kg
     vt_min = round(poids_retenu * 4, 1)
     vt_max = round(poids_retenu * 8, 1)
-    
-    # Volume Sanguin Total (EBV)
     ebv = round(poids_retenu * vol_sang_ratio, 0)
     
-    # Ventilation Minute (Vm = Vt x FR)
-    # On calcule la plage large : (Vt min * FR min) à (Vt max * FR max)
-    # C'est une plage indicative pour le réglage des alarmes
-    vm_min_l = round((vt_min * fr_range_val[0]) / 1000, 1) # en L/min
-    vm_max_l = round((vt_max * fr_range_val[1]) / 1000, 1) # en L/min
+    vm_min_l = round((vt_min * fr_range_val[0]) / 1000, 1) 
+    vm_max_l = round((vt_max * fr_range_val[1]) / 1000, 1) 
 
-    # --- AFFICHAGE DU TABLEAU ---
     data_physio = {
         "Paramètre": [
             "Fréquence Cardiaque (FC)",
@@ -277,30 +283,21 @@ if poids_retenu > 0:
     
     df_physio = pd.DataFrame(data_physio)
     st.table(df_physio.set_index('Paramètre'))
+    # CORRECTION PDF: Ajout au dictionnaire
+    pdf_data_store["2. Physiologie"] = df_physio
 
-# --- SECTION 3 : ARRÊT CARDIO-RESPIRATOIRE ---
-    st.subheader("3.💔 Arrêt Cardio-Respiratoire")
+    # --- SECTION 3 : ACR ---
+    st.subheader("3. 💔 Arrêt Cardio-Respiratoire")
 
-    # 1. Adrénaline (0.01 mg/kg) - Max 1 mg
     adre_dose = min(poids_retenu * 0.01, 1.0)
-    # Dilution : 1mg/1ml ramené à 10ml -> 0.1 mg/ml
     adre_vol = adre_dose / 0.1
-    
-    # 2. Amiodarone (5 mg/kg) - Max 300 mg
     amio_dose = min(poids_retenu * 5, 300.0)
-    # Présentation 150mg/3ml -> 50 mg/ml
     amio_vol = amio_dose / 50.0
-    
-    # 3. Lidocaïne (1.5 mg/kg) - Max 100 mg
     lido_dose = min(poids_retenu * 1.5, 100.0)
-    # Présentation 20 mg/ml
     lido_vol = lido_dose / 20.0
-    
-    # 4. Défibrillation (2-4 J/kg) - Max 200J / 360J
     choc_min = round(poids_retenu * 2, 0)
     choc_max = round(poids_retenu * 4, 0)
 
-    # Création du Tableau ACR
     data_acr = {
         "Médicament / Geste": [
             "Adrénaline (IV/IO)",
@@ -327,42 +324,31 @@ if poids_retenu > 0:
             f"{int(choc_min)} - {int(choc_max)} Joules"
         ]
     }
-    st.table(pd.DataFrame(data_acr).set_index('Médicament / Geste'))
+    df_acr = pd.DataFrame(data_acr)
+    st.table(df_acr.set_index('Médicament / Geste'))
+    # CORRECTION PDF: Ajout au dictionnaire
+    pdf_data_store["3. ACR"] = df_acr
 
     # --- SECTION 4 : DROGUES D'URGENCE ---
-    st.subheader("4.⚡ Drogues d'Urgence")
+    st.subheader("4. ⚡ Drogues d'Urgence")
 
-    # 1. Atropine (0.02 mg/kg) - Min 0.1mg - Max 0.5mg (Enfant) / 1mg (Ado)
-    # Règle de sécurité : dose min 0.1 mg souvent citée
     atro_brut = poids_retenu * 0.02
-    if atro_brut < 0.1: atro_dose = 0.1 # Min safe dose
-    elif atro_brut > 0.5 and age_years < 12: atro_dose = 0.5 # Max Child
-    elif atro_brut > 1.0: atro_dose = 1.0 # Max Ado/Adult
+    if atro_brut < 0.1: atro_dose = 0.1 
+    elif atro_brut > 0.5 and age_years_float < 12: atro_dose = 0.5 
+    elif atro_brut > 1.0: atro_dose = 1.0 
     else: atro_dose = atro_brut
     
-    atro_vol = atro_dose / 0.5 # Présentation 0.5 mg/ml
-
-    # 2. Ephédrine (0.2 mg/kg) - Max 10 mg
+    atro_vol = atro_dose / 0.5 
     ephed_dose = min(poids_retenu * 0.2, 10.0)
-    # Dilution : 30mg/ml ramené à 10ml -> 3 mg/ml
     ephed_vol = ephed_dose / 3.0
-
-    # 3. Calcium (0.5 ml/kg de Gluconate 10%) - Max 20 ml
     ca_vol = min(poids_retenu * 0.5, 20.0)
-    # Gluconate 10% -> ~9 mg Ca++ élément / ml
-    
-    # 4. Magnésium (25-50 mg/kg) - Max 2 g (2000 mg)
     mg_min = round(poids_retenu * 25, 0)
     mg_max = min(round(poids_retenu * 50, 0), 2000.0)
-    # Présentation 15% = 150 mg/ml
     mg_vol_min = round(mg_min / 150, 1)
     mg_vol_max = round(mg_max / 150, 1)
-
-    # 5. Cardioversion (0.5 - 2 J/kg)
     cv_min = round(poids_retenu * 0.5, 0)
     cv_max = round(poids_retenu * 2, 0)
 
-    # Création du Tableau Urgences
     data_urg = {
         "Médicament / Geste": [
             "Atropine",
@@ -393,31 +379,24 @@ if poids_retenu > 0:
             f"{int(cv_min)} - {int(cv_max)} Joules"
         ]
     }
-    st.table(pd.DataFrame(data_urg).set_index('Médicament / Geste'))
+    df_urg = pd.DataFrame(data_urg)
+    st.table(df_urg.set_index('Médicament / Geste'))
+    # CORRECTION PDF: Ajout au dictionnaire
+    pdf_data_store["4. Urgences"] = df_urg
 
     # --- SECTION 5 : ISR ---
     st.subheader("5. 💉 Induction Séquence Rapide")
-   
-    # 1. Propofol (2-3 mg/kg)
+    
     propofol_min = round(poids_retenu * 2, 0)
     propofol_max = round(poids_retenu * 3, 0)
-    
-    # 2. Etomidate (0.3 mg/kg)
     etomidate_dose = round(poids_retenu * 0.3, 1)
-    
-    # 3. Kétamine (1-3 mg/kg)
     keta_min = round(poids_retenu * 1, 0)
     keta_max = round(poids_retenu * 3, 0)
-    
-    # 4. Fentanyl (2-3 gamma/kg)
     fenta_min = round(poids_retenu * 2, 0)
     fenta_max = round(poids_retenu * 3, 0)
-    
-    # 5. Rocuronium (0.6 - 1.2 mg/kg)
     rocu_min = round(poids_retenu * 0.6, 1)
     rocu_max = round(poids_retenu * 1.2, 1)
 
-    # Création du Tableau ISR
     data_isr = {
         "Médicament": [
             "Propofol",
@@ -449,7 +428,11 @@ if poids_retenu > 0:
         ]
     }
     
-    st.table(pd.DataFrame(data_isr).set_index('Médicament'))
+    df_isr = pd.DataFrame(data_isr)
+    st.table(df_isr.set_index('Médicament'))
+    # CORRECTION PDF: Ajout au dictionnaire
+    pdf_data_store["5. ISR"] = df_isr
+
     # --- SECTION 6 : SEDATION ---
     st.subheader("6. 💤 Sédation Continue")
     st.markdown("**A. Midazolam + Fentanyl**")
@@ -473,7 +456,6 @@ if poids_retenu > 0:
         for v in vitesses:
             dose_mida = round(v * 0.04, 2)
             dose_fenta = round(v * 0.5, 1)
-            # Alerte visuelle si dépasse dose max (0.4 mg/kg/h ou 5 mcg/kg/h)
             alert = "⚠️" if (dose_mida > 0.4 or dose_fenta > 5) else ""
             data_sedation.append([f"{v} ml/h {alert}", f"{dose_mida} mg/kg/h", f"{dose_fenta} mcg/kg/h"])
             
@@ -486,12 +468,10 @@ if poids_retenu > 0:
         vitesse_max_safe = round(poids_retenu * 0.4, 1)
         st.error(f"⛔ Max **{vitesse_max_safe} ml/h** (correspond à 0.4 mg/kg/h)")
         
-        # Cibles incluant 0.4
         cibles_mida = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4]
         data_sedation_grand = []
         for c in cibles_mida:
             c_fenta = c * 10
-            # Vitesse = (Dose * Poids) / Conc (1mg/ml)
             vit = round(c * poids_retenu, 1)
             data_sedation_grand.append([f"{c} mg/kg/h", f"{c_fenta} mcg/kg/h", f"**{vit} ml/h**"])
             
@@ -661,6 +641,4 @@ if poids_retenu > 0:
             file_name=f"Fiche_Rea_{nom_patient.replace(' ', '_')}.pdf",
             mime="application/pdf",
             type="primary" 
-
         )
-
