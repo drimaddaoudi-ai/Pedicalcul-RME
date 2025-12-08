@@ -478,7 +478,7 @@ if poids_retenu > 0:
         df_sed = pd.DataFrame(data_sedation_grand, columns=["Cible Midaz", "Cible Fenta", "Vitesse à régler"])
 
     st.table(df_sed.set_index(df_sed.columns[0]))
-    pdf_data_store["6. Sédation (Midaz/Fenta)"] = df_sed
+    pdf_data_store["6a. Sédation par Midaz/Fenta"] = df_sed
 
     st.markdown("**B. Propofol (Pur 10 mg/ml)**")
     st.warning("⚠️ Changer seringue + prolongateur / 12h. Max 4 mg/kg/h (PRIS)")
@@ -642,5 +642,6 @@ if poids_retenu > 0:
             mime="application/pdf",
             type="primary" 
         )
+
 
 
