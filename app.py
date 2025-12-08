@@ -433,15 +433,19 @@ if poids_retenu > 0:
     # CORRECTION PDF: Ajout au dictionnaire
     pdf_data_store["5. ISR"] = df_isr
 
-    # --- SECTION 6 : SEDATION ---
+# --- SECTION 6 : SEDATION ---
     st.subheader("6. 💤 Sédation Continue")
     st.markdown("**A. Midazolam + Fentanyl**")
+    
+    # Initialisation variables pour PDF
+    titre_pdf_sedation = "6a. Sédation Midaz/Fenta"
     
     if poids_retenu < 20:
         # LOGIQUE < 20 KG
         mida_qty = round(poids_retenu * 2, 1)
         fenta_qty = round(poids_retenu * 25, 1)
         
+        # Affichage Ecran
         st.info(f"""
         **PROTOCOLE < 20 KG (Dilution Spécifique)**
         * **Midazolam :** 2 x Poids = **{mida_qty} mg**
@@ -449,6 +453,9 @@ if poids_retenu > 0:
         * *Compléter SAP 50 ml avec SSI/G5*
         """)
         st.error("⛔ Ne jamais dépasser 10 ml/h")
+        
+        # Titre PDF avec la dilution calculée
+        titre_pdf_sedation = f"6. Sédation (Dilution: Midaz {mida_qty}mg + Fenta {fenta_qty}mcg / 50ml)"
         
         # Tableau 1 à 10 ml/h
         vitesses = list(range(1, 11)) 
@@ -468,6 +475,10 @@ if poids_retenu > 0:
         vitesse_max_safe = round(poids_retenu * 0.4, 1)
         st.error(f"⛔ Max **{vitesse_max_safe} ml/h** (correspond à 0.4 mg/kg/h)")
         
+        # Titre PDF avec la dilution standard
+        titre_pdf_sedation = "6. Sédation (Dilution Std: Midaz 50mg + Fenta 500mcg / 50ml)"
+        
+        # Cibles incluant 0.4
         cibles_mida = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4]
         data_sedation_grand = []
         for c in cibles_mida:
@@ -478,7 +489,9 @@ if poids_retenu > 0:
         df_sed = pd.DataFrame(data_sedation_grand, columns=["Cible Midaz", "Cible Fenta", "Vitesse à régler"])
 
     st.table(df_sed.set_index(df_sed.columns[0]))
-    pdf_data_store["6a. Sédation par Midaz/Fenta"] = df_sed
+    
+    # Enregistrement pour le PDF avec le titre contenant la dilution
+    pdf_data_store[titre_pdf_sedation] = df_sed
 
     st.markdown("**B. Propofol (Pur 10 mg/ml)**")
     st.warning("⚠️ Changer seringue + prolongateur / 12h. Max 4 mg/kg/h (PRIS)")
@@ -642,6 +655,7 @@ if poids_retenu > 0:
             mime="application/pdf",
             type="primary" 
         )
+
 
 
 
