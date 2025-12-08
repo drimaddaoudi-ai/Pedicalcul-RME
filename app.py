@@ -123,9 +123,6 @@ with col_p2:
     st.info(f"Poids théorique calculé : **{poids_estime} kg**")
     poids_retenu = st.number_input("Poids RETENU (kg)", value=float(poids_estime), step=0.5)
 # ... (votre code d'identification juste au-dessus) ...
-with col_p2:
-    st.info(f"Poids théorique calculé : **{poids_estime} kg**")
-    poids_retenu = st.number_input("Poids RETENU (kg)", value=float(poids_estime), step=0.5)
 
 # --- AJOUT DU DISCLAIMER ICI ---
 st.warning("""
@@ -666,3 +663,4 @@ if poids_retenu > 0:
             type="primary" 
 
         )
+
