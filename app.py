@@ -129,7 +129,8 @@ with col_p2:
 
 # --- AJOUT DU DISCLAIMER ---
 st.warning("""
-⚠️ **AVERTISSEMENT :** * Cette application est destinée **exclusivement** à un usage interne au service de **Réanimation Mère-Enfant** au CHU HASSAN II de Fès (Maroc).
+⚠️ **AVERTISSEMENT :
+* Cette application est destinée **exclusivement** à un usage interne au service de **Réanimation Mère-Enfant** au CHU HASSAN II de Fès (Maroc).
 * Elle constitue une aide au calcul et ne remplace en aucun moment le **jugement clinique**.
 * Le praticien reste seul responsable de la vérification des doses avant administration.
 """)
@@ -642,3 +643,4 @@ if poids_retenu > 0:
             mime="application/pdf",
             type="primary" 
         )
+
