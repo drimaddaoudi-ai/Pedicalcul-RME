@@ -573,7 +573,7 @@ if poids_retenu > 0:
     if is_capped: st.warning("⚠️ Plafonné à 2500 ml/j")
     
     df_base = pd.DataFrame({
-        "Situation": ["Standard (4-2-1)", "Restriction (SIADH, Post-op, polytrauma, choc septique, SDRA)"],
+        "Situation": ["Standard (4-2-1)", "Restriction 2/3 (SIADH, Post-op, polytrauma, choc septique, SDRA)"],
         "Débit SAP": [f"**{base_rate} ml/h**", f"**{restr_rate} ml/h**"],
         "Volume/24h": [f"{int(base_daily)} ml", f"{int(restr_daily)} ml"]
     })
@@ -635,8 +635,19 @@ if poids_retenu > 0:
         ("Furosémide", 1.0, "mg", "/ 6-12h"),
         ("Acide Tranex", 20.0, "mg", "(Bolus 15 min)"),
         ("Bicar 1.4%", 6.0, "ml", "(Bolus lent, à répéter si nécessaire)"),
-        ("SSH 3%", 3.0, "ml", "(Bolus 20 min)")
     ]
+    # ... après la boucle for qui traite divers_meds ...
+
+    # --- AJOUT DU SSH 3% EN INTERVALLE (2-5 ml/kg) ---
+    ssh_min = int(poids_retenu * 2)
+    ssh_max = int(poids_retenu * 5)
+    
+    # On l'ajoute au tableau
+    data_divers.append([
+        "SSH 3%", 
+        "2-5 ml/kg", 
+        f"**{ssh_min} - {ssh_max} ml** (Bolus 15-20 min)"
+    ])
     data_divers = []
     for name, dose_ref, unit, freq in divers_meds:
         calc = round(poids_retenu * dose_ref, 2)
@@ -675,6 +686,7 @@ if poids_retenu > 0:
             mime="application/pdf",
             type="primary" 
         )
+
 
 
 
