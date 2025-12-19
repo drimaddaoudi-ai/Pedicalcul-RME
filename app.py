@@ -367,7 +367,7 @@ if poids_retenu > 0:
             "1.5 mg/kg",
             "2 - 4 J/kg"
         ],
-        "Dose Calculée (à administrer)": [
+        "Dose à administrer": [
             f"{round(adre_dose, 3)} mg  =  {round(adre_vol, 2)} ml",
             f"{int(amio_dose)} mg  =  {round(amio_vol, 1)} ml",
             f"{int(lido_dose)} mg  =  {round(lido_vol, 1)} ml",
@@ -421,7 +421,7 @@ if poids_retenu > 0:
             "25 - 50 mg/kg",
             "0.5 - 2 J/kg"
         ],
-        "Dose Calculée (à administrer)": [
+        "Dose à administrer": [
             f"{round(atro_dose, 2)} mg  =  {round(atro_vol, 2)} ml",
             f"{round(ephed_dose, 1)} mg  =  {round(ephed_vol, 1)} ml",
             f"{round(ca_vol, 1)} ml (direct)",
@@ -785,6 +785,7 @@ if poids_retenu > 0:
             mime="application/pdf",
             type="primary" 
         )
+
 
 
 
