@@ -7,18 +7,8 @@ import datetime
 st.set_page_config(page_title="Pédicalcul CHU Fès", layout="wide", page_icon="👶")
 
 # ==========================================
-# 🔐 SÉCURITÉ : AUTHENTIFICATION PAR EMAIL
+# 🔐 SÉCURITÉ : AUTHENTIFICATION VIA SECRETS
 # ==========================================
-
-# 1. LISTE DES UTILISATEURS AUTORISÉS
-# Format : "email": "mot_de_passe"
-# CONSEIL : Mettez des mots de passe un peu complexes
-UTILISATEURS = {
-    "imad.daoudi@usmba.ac.ma": "admin01",
-    "doughmi.djoudline@gmail.com": "prof",
-    "interne2@usmba.ac.ma": "1234",
-    "infirmier@chu-fes.ma": "1234"
-}
 
 # Initialisation de l'état (mémoire)
 if 'authenticated' not in st.session_state:
@@ -27,11 +17,19 @@ if 'user_email' not in st.session_state:
     st.session_state.user_email = ""
 
 def verifier_login():
-    email_input = st.session_state.email_input.lower().strip() # Nettoyage (minuscule/espace)
+    email_input = st.session_state.email_input.lower().strip()
     password_input = st.session_state.password_input
     
-    if email_input in UTILISATEURS:
-        if UTILISATEURS[email_input] == password_input:
+    # On récupère la liste des utilisateurs depuis les secrets sécurisés de Streamlit
+    # Le code est public, mais st.secrets est privé et invisible sur GitHub
+    try:
+        users_db = st.secrets["passwords"]
+    except FileNotFoundError:
+        st.error("⚠️ Erreur de configuration : Les secrets ne sont pas définis sur le serveur.")
+        return
+
+    if email_input in users_db:
+        if users_db[email_input] == password_input:
             st.session_state.authenticated = True
             st.session_state.user_email = email_input
         else:
@@ -58,11 +56,13 @@ if not st.session_state.authenticated:
     
     st.stop() # 🛑 Arrête l'application ici si pas connecté
 
-# Petit message de bienvenue dans la barre latérale une fois connecté
-st.sidebar.success(f"Connecté en tant que : {st.session_state.user_email}")
+# Petit message de bienvenue
+st.sidebar.success(f"Connecté : {st.session_state.user_email}")
 if st.sidebar.button("Se déconnecter"):
     st.session_state.authenticated = False
     st.rerun()
+
+# ... LA SUITE DU CODE (FONCTION PDF, ETC.) RESTE IDENTIQUE ...
 
 # ==========================================
 # 🏥 DÉBUT DE L'APPLICATION (Le reste de votre code suit ici...)
@@ -847,6 +847,7 @@ if poids_retenu > 0:
             mime="application/pdf",
             type="primary" 
         )
+
 
 
 
