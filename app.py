@@ -6,6 +6,35 @@ import datetime
 # --- CONFIGURATION DE LA PAGE ---
 st.set_page_config(page_title="Pédicalcul CHU Fès", layout="wide", page_icon="👶")
 
+# ==========================================
+# 🔐 SÉCURITÉ : CODE PIN
+# ==========================================
+# Définissez votre mot de passe ici
+MOT_DE_PASSE = "4321" 
+
+# Initialisation de l'état de la session (mémoire)
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+
+# Fonction de vérification
+def verifier_code():
+    if st.session_state.input_code == MOT_DE_PASSE:
+        st.session_state.authenticated = True
+    else:
+        st.session_state.authenticated = False
+        st.error("⛔ Code d'accès incorrect")
+
+# Si l'utilisateur n'est pas connecté, on affiche QUE la demande de code
+if not st.session_state.authenticated:
+    st.markdown("## 🔒 Accès Réservé - Réanimation Mère-Enfant")
+    st.text_input("Veuillez entrer le code d'accès de l'équipe :", type="password", key="input_code", on_change=verifier_code)
+    st.info("Cet outil est réservé au personnel du CHU Hassan II.")
+    st.stop()  # 🛑 Arrête tout le reste du script ici tant que le code n'est pas bon
+
+# ==========================================
+# 🏥 DÉBUT DE L'APPLICATION (Le reste de votre code suit ici...)
+# ==========================================
+
 # --- FONCTION DE GÉNÉRATION PDF ---
 class PDF(FPDF):
     def header(self):
@@ -785,6 +814,7 @@ if poids_retenu > 0:
             mime="application/pdf",
             type="primary" 
         )
+
 
 
 
