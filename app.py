@@ -698,7 +698,7 @@ if poids_retenu > 0:
     df_divers = pd.DataFrame(data_divers, columns=["Médicament", "Poso Réf", "Dose Calculée"])
     st.table(df_divers.set_index("Médicament"))
     pdf_data_store["13. Divers"] = df_divers
-    # --- SECTION 14 : BIOLOGIE (NOUVEAU) ---
+# --- SECTION 14 : BIOLOGIE (NOUVEAU) ---
     st.subheader("14. 🩸 Constantes Biologiques (Valeurs Normales)")
     
     # A. Définition des normes selon l'âge (Sources: Harriet Lane / CALIPER)
@@ -732,27 +732,27 @@ if poids_retenu > 0:
         bio_alb = "35 - 50 g/L"
         bio_got = "15 - 40 UI/L"
 
-    # B. Tableau des données
+    # B. Tableau des données (Sans la colonne Bilan)
     data_bio = [
-        ["Hémoglobine (Hb)", bio_hb, "NFS"],
-        ["Hématocrite (Hte)", bio_hte, "NFS"],
-        ["Globules Blancs (GB)", bio_gb, "NFS"],
-        ["Plaquettes", "150 - 450 G/L", "NFS"],
-        ["Sodium (Na+)", "135 - 145 mmol/L", "Iono"],
-        ["Potassium (K+)", "3.5 - 5.0 mmol/L", "Iono"],
-        ["Chlore (Cl-)", "98 - 107 mmol/L", "Iono"],
-        ["Réserve Alcaline (RA)", "22 - 26 mmol/L", "Iono"],
-        ["Calcium (Ca++)", "88 - 108 mg/L", "Bilan Ca"],
-        ["Phosphore", bio_phos, "Bilan Ca (⚠️ Croissance)"],
-        ["Magnésium", "0.017 - 0.022 g/L", "Bilan Ca (17-22 mg/L)"],
-        ["Albumine", bio_alb, "Bilan Prot"],
-        ["Urée", bio_uree, "Fonction Rénale"],
-        ["Créatinine", bio_creat, "Fonction Rénale"],
-        ["GOT (ASAT)", bio_got, "Hépatique"],
-        ["GPT (ALAT)", "10 - 45 UI/L", "Hépatique"]
+        ["Hémoglobine (Hb)", bio_hb],
+        ["Hématocrite (Hte)", bio_hte],
+        ["Globules Blancs (GB)", bio_gb],
+        ["Plaquettes", "150 - 450 G/L"],
+        ["Sodium (Na+)", "135 - 145 mmol/L"],
+        ["Potassium (K+)", "3.5 - 5.0 mmol/L"],
+        ["Chlore (Cl-)", "98 - 107 mmol/L"],
+        ["Réserve Alcaline (RA)", "22 - 26 mmol/L"],
+        ["Calcium (Ca++)", "88 - 108 mg/L"],
+        ["Phosphore", bio_phos],
+        ["Magnésium", "0.017 - 0.022 g/L"],
+        ["Albumine", bio_alb],
+        ["Urée", bio_uree],
+        ["Créatinine", bio_creat],
+        ["GOT (ASAT)", bio_got],
+        ["GPT (ALAT)", "10 - 45 UI/L"]
     ]
 
-    df_bio = pd.DataFrame(data_bio, columns=["Paramètre", "Valeurs de Référence", "Bilan"])
+    df_bio = pd.DataFrame(data_bio, columns=["Paramètre", "Valeurs de Référence"])
     st.table(df_bio.set_index("Paramètre"))
     pdf_data_store["14. Biologie"] = df_bio
     
@@ -767,6 +767,7 @@ if poids_retenu > 0:
             mime="application/pdf",
             type="primary" 
         )
+
 
 
 
