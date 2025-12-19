@@ -49,11 +49,26 @@ def create_pdf(patient_info, data_sections):
             cols = df.columns.tolist()
             page_width = 190
             
-            # Ajustement largeur colonnes
-            if len(cols) > 0:
+            # --- CORRECTION ICI : Ajustement intelligent largeur colonnes ---
+            if len(cols) == 4:
+                # Cas ACR / Urgences : On donne plus de place à la col 2 (Présentation)
+                # Col 1: 22%, Col 2: 38% (Large), Col 3: 20%, Col 4: 20%
+                col_widths = [page_width * 0.22, page_width * 0.38, page_width * 0.20, page_width * 0.20]
+            
+            elif len(cols) == 3:
+                # Cas Sédation / Divers
+                col_widths = [page_width * 0.30, page_width * 0.30, page_width * 0.40]
+            
+            elif len(cols) == 2:
+                # Cas Physio / Bio / Intubation
+                col_widths = [page_width * 0.40, page_width * 0.60]
+            
+            elif len(cols) > 0:
+                # Fallback générique
                 col_widths = [page_width * 0.35] + [page_width * 0.65 / (len(cols)-1)] * (len(cols)-1)
             else:
                 col_widths = [page_width]
+            # -------------------------------------------------------------
 
             # En-têtes
             pdf.set_font("Arial", 'B', 8)
@@ -64,6 +79,9 @@ def create_pdf(patient_info, data_sections):
             # Données
             pdf.set_font("Arial", size=8)
             for index, row in df.iterrows():
+                # On calcule la hauteur nécessaire pour la ligne (multicell support)
+                # Pour simplifier ici, on garde cell mais on tronque si trop long ou on réduit la police
+                # L'ajustement des colonnes ci-dessus devrait suffire pour éviter le débordement
                 for i, col in enumerate(cols):
                     # Nettoyage
                     val = str(row[col]).replace('**', '').replace('⚠️', '!').replace('⛔', 'STOP').replace('⚡', '').replace('💧', '')
@@ -767,6 +785,7 @@ if poids_retenu > 0:
             mime="application/pdf",
             type="primary" 
         )
+
 
 
 
