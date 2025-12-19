@@ -624,9 +624,10 @@ if poids_retenu > 0:
     st.error("⛔ Morphine Bolus : Ne jamais dépasser 3 mg.")
     pdf_data_store["12. Analgésie"] = df_analg
 
-    # --- SECTION 13 : DIVERS ---
+# --- SECTION 13 : DIVERS ---
     st.subheader("13. 🏥 Divers & Thérapeutiques")
     
+    # 1. Liste standard (SANS le SSH)
     divers_meds = [
         ("Oméprazole", 1.0, "mg", "/ 24h"),
         ("Ondansétron", 0.15, "mg", "/ 8h (Max 8mg)"),
@@ -636,25 +637,26 @@ if poids_retenu > 0:
         ("Acide Tranex", 20.0, "mg", "(Bolus 15 min)"),
         ("Bicar 1.4%", 6.0, "ml", "(Bolus lent, à répéter si nécessaire)"),
     ]
-    # ... après la boucle for qui traite divers_meds ...
 
-    # --- AJOUT DU SSH 3% EN INTERVALLE (2-5 ml/kg) ---
-    ssh_min = int(poids_retenu * 2)
-    ssh_max = int(poids_retenu * 5)
-    
-    # On l'ajoute au tableau
-    data_divers.append([
-        "SSH 3%", 
-        "2-5 ml/kg", 
-        f"**{ssh_min} - {ssh_max} ml** (Bolus 15-20 min)"
-    ])
+    # 2. On initialise la liste vide (C'est cette ligne qui manquait au début)
     data_divers = []
+
+    # 3. On remplit avec les médicaments standard
     for name, dose_ref, unit, freq in divers_meds:
         calc = round(poids_retenu * dose_ref, 2)
         if unit == "ml": calc = int(calc)
         data_divers.append([name, f"{dose_ref} {unit}/kg", f"**{calc} {unit}** {freq}"])
 
-    # Cas Spéciaux
+    # 4. On ajoute le SSH (Cas Spécial) MAINTENANT que la liste existe
+    ssh_min = int(poids_retenu * 2)
+    ssh_max = int(poids_retenu * 5)
+    data_divers.append([
+        "SSH 3%", 
+        "2-5 ml/kg", 
+        f"**{ssh_min} - {ssh_max} ml** (Bolus 15-20 min)"
+    ])
+
+    # 5. Autres Cas Spéciaux
     meto_d = "⛔ < 1 an" if age_years < 1 else f"**{round(poids_retenu*0.15,2)} mg** / 8h"
     data_divers.append(["Métoclopramide", "0.15 mg/kg", meto_d])
     
@@ -667,7 +669,7 @@ if poids_retenu > 0:
     loxen_min, loxen_max = round(poids_retenu*0.02,2), round(poids_retenu*0.03,2)
     data_divers.append(["Nicardipine (Bolus)", "20-30 mcg/kg", f"**{loxen_min}-{loxen_max} mg**"])
     
-    # Nicardipine SAP intégrée au tableau
+    # Nicardipine SAP
     loxen_sap_min = round((poids_retenu * 0.5 * 60) / 1000, 2)
     loxen_sap_max = round((poids_retenu * 3.0 * 60) / 1000, 2)
     data_divers.append(["Nicardipine (SAP)", "0.5-3 mcg/kg/min", f"**{loxen_sap_min} - {loxen_sap_max} mg/h** (Continu)"])
@@ -686,6 +688,7 @@ if poids_retenu > 0:
             mime="application/pdf",
             type="primary" 
         )
+
 
 
 
