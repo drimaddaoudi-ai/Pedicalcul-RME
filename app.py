@@ -14,8 +14,8 @@ st.set_page_config(page_title="Pédicalcul CHU Fès", layout="wide", page_icon="
 # Format : "email": "mot_de_passe"
 # CONSEIL : Mettez des mots de passe un peu complexes
 UTILISATEURS = {
-    "imad.daoudi@usmba.ac.ma": "admin1234",
-    "interne1@usmba.ac.ma": "1234",
+    "imad.daoudi@usmba.ac.ma": "admin01",
+    "doughmi.djoudline@gmail.com": "prof",
     "interne2@usmba.ac.ma": "1234",
     "infirmier@chu-fes.ma": "1234"
 }
@@ -847,6 +847,7 @@ if poids_retenu > 0:
             mime="application/pdf",
             type="primary" 
         )
+
 
 
 
