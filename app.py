@@ -27,8 +27,8 @@ def verifier_code():
 # Si l'utilisateur n'est pas connecté, on affiche QUE la demande de code
 if not st.session_state.authenticated:
     st.markdown("## 🔒 Accès Réservé - Réanimation Mère-Enfant")
-    st.text_input("Veuillez entrer le code d'accès de l'équipe :", type="password", key="input_code", on_change=verifier_code)
-    st.info("Cet outil est réservé au personnel du CHU Hassan II.")
+    st.text_input("Veuillez entrer le code d'accès :", type="password", key="input_code", on_change=verifier_code)
+    st.info("Cet outil est réservé au personnel de la Réanimation Mère Enfant (CHU Hassan II).")
     st.stop()  # 🛑 Arrête tout le reste du script ici tant que le code n'est pas bon
 
 # ==========================================
@@ -814,6 +814,7 @@ if poids_retenu > 0:
             mime="application/pdf",
             type="primary" 
         )
+
 
 
 
