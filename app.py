@@ -626,58 +626,66 @@ if poids_retenu > 0:
 
 # --- SECTION 13 : DIVERS ---
     st.subheader("13. 🏥 Divers & Thérapeutiques")
-    
-    # 1. Liste standard (SANS le SSH)
-    divers_meds = [
-        ("Oméprazole", 1.0, "mg", "/ 24h"),
-        ("Ondansétron", 0.15, "mg", "/ 8h (Max 8mg)"),
-        ("Méthylprédni", 1.0, "mg", "/ 6h"),
-        ("Dexaméthasone", 0.2, "mg", "/ jour"),
-        ("Furosémide", 1.0, "mg", "/ 6-12h"),
-        ("Acide Tranex", 20.0, "mg", "(Bolus 15 min)"),
-        ("Bicar 1.4%", 6.0, "ml", "(Bolus lent, à répéter si nécessaire)"),
-    ]
-
-    # 2. On initialise la liste vide (C'est cette ligne qui manquait au début)
     data_divers = []
 
-    # 3. On remplit avec les médicaments standard
-    for name, dose_ref, unit, freq in divers_meds:
-        calc = round(poids_retenu * dose_ref, 2)
-        if unit == "ml": calc = int(calc)
-        data_divers.append([name, f"{dose_ref} {unit}/kg", f"**{calc} {unit}** {freq}"])
+    # 1. Oméprazole
+    calc_ome = round(poids_retenu * 1.0, 2)
+    data_divers.append(["Oméprazole", "1.0 mg/kg", f"**{calc_ome} mg** / 24h"])
 
-    # 4. On ajoute le SSH (Cas Spécial) MAINTENANT que la liste existe
-    ssh_min = int(poids_retenu * 2)
-    ssh_max = int(poids_retenu * 5)
-    data_divers.append([
-        "SSH 3%", 
-        "2-5 ml/kg", 
-        f"**{ssh_min} - {ssh_max} ml** (Bolus 15-20 min)"
-    ])
-
-    # 5. Autres Cas Spéciaux
+    # 2. Métoclopramide (Contre-indiqué < 1 an)
     meto_d = "⛔ < 1 an" if age_years < 1 else f"**{round(poids_retenu*0.15,2)} mg** / 8h"
     data_divers.append(["Métoclopramide", "0.15 mg/kg", meto_d])
-    
-    hydro_d = f"**{round(poids_retenu,1)} mg** / 6h"
-    data_divers.append(["Hydrocortisone", "1 mg/kg/dose", hydro_d])
-    
+
+    # 3. Ondansétron
+    calc_onda = round(poids_retenu * 0.15, 2)
+    data_divers.append(["Ondansétron", "0.15 mg/kg", f"**{calc_onda} mg** / 8h (Max 8mg)"])
+
+    # 4. Méthylprédni
+    calc_methyl = round(poids_retenu * 1.0, 2)
+    data_divers.append(["Méthylprédni", "1.0 mg/kg", f"**{calc_methyl} mg** / 6h"])
+
+    # 5. Hydrocortisone
+    calc_hydro = round(poids_retenu * 1.0, 2)
+    data_divers.append(["Hydrocortisone", "1 mg/kg/dose", f"**{calc_hydro} mg** / 6h"])
+
+    # 6. Dexaméthasone
+    calc_dexa = round(poids_retenu * 0.2, 2)
+    data_divers.append(["Dexaméthasone", "0.2 mg/kg", f"**{calc_dexa} mg** / jour"])
+
+    # 7. Furosémide
+    calc_furo = round(poids_retenu * 1.0, 2)
+    data_divers.append(["Furosémide", "1.0 mg/kg", f"**{calc_furo} mg** / 6-12h"])
+
+    # 8. Mannitol 10%
     manni_min, manni_max = int(poids_retenu*5), int(poids_retenu*10)
     data_divers.append(["Mannitol 10%", "0.5-1 g/kg", f"**{manni_min}-{manni_max} ml** (Bolus)"])
-    
+
+    # 9. SSH 3%
+    ssh_min = int(poids_retenu * 2)
+    ssh_max = int(poids_retenu * 5)
+    data_divers.append(["SSH 3%", "2-5 ml/kg", f"**{ssh_min} - {ssh_max} ml** (Bolus 15-20 min)"])
+
+    # 10. Bicar 1.4%
+    calc_bicar = int(poids_retenu * 6.0) # En ml directement
+    data_divers.append(["Bicar 1.4%", "6.0 ml/kg", f"**{calc_bicar} ml** (Bolus lent, à répéter si nécessaire)"])
+
+    # 11. Acide Tranex
+    calc_tranex = round(poids_retenu * 20.0, 2)
+    data_divers.append(["Acide Tranex", "20.0 mg/kg", f"**{calc_tranex} mg** (Bolus 15 min)"])
+
+    # 12. Nicardipine (Bolus)
     loxen_min, loxen_max = round(poids_retenu*0.02,2), round(poids_retenu*0.03,2)
     data_divers.append(["Nicardipine (Bolus)", "20-30 mcg/kg", f"**{loxen_min}-{loxen_max} mg**"])
-    
-    # Nicardipine SAP
+
+    # 13. Nicardipine (SAP)
     loxen_sap_min = round((poids_retenu * 0.5 * 60) / 1000, 2)
     loxen_sap_max = round((poids_retenu * 3.0 * 60) / 1000, 2)
     data_divers.append(["Nicardipine (SAP)", "0.5-3 mcg/kg/min", f"**{loxen_sap_min} - {loxen_sap_max} mg/h** (Continu)"])
 
+    # --- AFFICHAGE ---
     df_divers = pd.DataFrame(data_divers, columns=["Médicament", "Poso Réf", "Dose Calculée"])
     st.table(df_divers.set_index("Médicament"))
     pdf_data_store["13. Divers"] = df_divers
-
     # --- GÉNÉRATION DU BOUTON PDF (FIN) ---
     with pdf_button_placeholder:
         pdf_bytes = create_pdf(p_info, pdf_data_store)
@@ -688,6 +696,7 @@ if poids_retenu > 0:
             mime="application/pdf",
             type="primary" 
         )
+
 
 
 
