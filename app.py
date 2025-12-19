@@ -280,6 +280,9 @@ if poids_retenu > 0:
     vm_min_l = round((vt_min * fr_range_val[0]) / 1000, 1) 
     vm_max_l = round((vt_max * fr_range_val[1]) / 1000, 1) 
 
+   # ... (Code existant du calcul VM_min/max) ...
+
+    # --- MISE A JOUR : Ajout Gazométrie dans le tableau Physiologie ---
     data_physio = {
         "Paramètre": [
             "Fréquence Cardiaque (FC)",
@@ -288,7 +291,12 @@ if poids_retenu > 0:
             "Fréquence Respiratoire (FR)",
             "Volume Courant (Vt 4-8 ml/kg)",
             "Ventilation Minute (Vm)",
-            f"Masse Sanguine ({vol_sang_ratio} ml/kg)"
+            f"Masse Sanguine ({vol_sang_ratio} ml/kg)",
+            "Gazométrie : pH (Art / Vein)",
+            "Gazométrie : PCO2 (Art / Vein)",
+            "Gazométrie : PO2 (Art / Vein)",
+            "Gazométrie : HCO3- (Bicar)",
+            "Gazométrie : Lactates"
         ],
         "Valeur Normale / Cible": [
             fc_range,
@@ -297,14 +305,18 @@ if poids_retenu > 0:
             f"{fr_range_val[0]} - {fr_range_val[1]} cpm",
             f"{vt_min} - {vt_max} ml",
             f"{vm_min_l} - {vm_max_l} L/min",
-            f"~ {int(ebv)} ml"
+            f"~ {int(ebv)} ml",
+            "7.35-7.45  /  7.32-7.43",
+            "35-45 mmHg  /  38-50 mmHg",
+            "80-100 mmHg /  30-50 mmHg",
+            "22 - 26 mmol/L",
+            "< 2.0 mmol/L"
         ]
     }
     
     df_physio = pd.DataFrame(data_physio)
     st.table(df_physio.set_index('Paramètre'))
-    # CORRECTION PDF: Ajout au dictionnaire
-    pdf_data_store["2. Physiologie"] = df_physio
+    pdf_data_store["2. Physiologie & Gazo"] = df_physio
 
     # --- SECTION 3 : ACR ---
     st.subheader("3. 💔 Arrêt Cardio-Respiratoire")
@@ -686,6 +698,65 @@ if poids_retenu > 0:
     df_divers = pd.DataFrame(data_divers, columns=["Médicament", "Poso Réf", "Dose Calculée"])
     st.table(df_divers.set_index("Médicament"))
     pdf_data_store["13. Divers"] = df_divers
+    # --- SECTION 14 : BIOLOGIE (NOUVEAU) ---
+    st.subheader("14. 🩸 Constantes Biologiques (Valeurs Normales)")
+    
+    # A. Définition des normes selon l'âge (Sources: Harriet Lane / CALIPER)
+    if total_months < 12: # Nourrisson
+        bio_hb = "10.0 - 12.0 g/dL"
+        bio_hte = "30 - 36 %"
+        bio_gb = "6.0 - 17.5 G/L"
+        bio_creat = "2 - 4 mg/L"
+        bio_uree = "0.10 - 0.35 g/L"
+        bio_phos = "40 - 70 mg/L" # Élevé (Croissance)
+        bio_alb = "30 - 45 g/L"
+        bio_got = "20 - 80 UI/L"
+        
+    elif total_months < 144: # Enfant (1 - 12 ans)
+        bio_hb = "11.0 - 13.5 g/dL"
+        bio_hte = "33 - 40 %"
+        bio_gb = "5.5 - 15.5 G/L"
+        bio_creat = "3 - 6 mg/L"
+        bio_uree = "0.15 - 0.40 g/L"
+        bio_phos = "35 - 55 mg/L"
+        bio_alb = "35 - 50 g/L"
+        bio_got = "20 - 60 UI/L"
+
+    else: # Ado (> 12 ans)
+        bio_hb = "12.0 - 15.5 g/dL"
+        bio_hte = "36 - 46 %"
+        bio_gb = "4.5 - 11.0 G/L"
+        bio_creat = "5 - 9 mg/L" # Masse musculaire
+        bio_uree = "0.15 - 0.45 g/L"
+        bio_phos = "25 - 45 mg/L" # Adulte
+        bio_alb = "35 - 50 g/L"
+        bio_got = "15 - 40 UI/L"
+
+    # B. Tableau des données
+    data_bio = [
+        ["Hémoglobine (Hb)", bio_hb, "NFS"],
+        ["Hématocrite (Hte)", bio_hte, "NFS"],
+        ["Globules Blancs (GB)", bio_gb, "NFS"],
+        ["Plaquettes", "150 - 450 G/L", "NFS"],
+        ["Sodium (Na+)", "135 - 145 mmol/L", "Iono"],
+        ["Potassium (K+)", "3.5 - 5.0 mmol/L", "Iono"],
+        ["Chlore (Cl-)", "98 - 107 mmol/L", "Iono"],
+        ["Réserve Alcaline (RA)", "22 - 26 mmol/L", "Iono"],
+        ["Calcium (Ca++)", "88 - 108 mg/L", "Bilan Ca"],
+        ["Phosphore", bio_phos, "Bilan Ca (⚠️ Croissance)"],
+        ["Magnésium", "0.017 - 0.022 g/L", "Bilan Ca (17-22 mg/L)"],
+        ["Albumine", bio_alb, "Bilan Prot"],
+        ["Urée", bio_uree, "Fonction Rénale"],
+        ["Créatinine", bio_creat, "Fonction Rénale"],
+        ["GOT (ASAT)", bio_got, "Hépatique"],
+        ["GPT (ALAT)", "10 - 45 UI/L", "Hépatique"]
+    ]
+
+    df_bio = pd.DataFrame(data_bio, columns=["Paramètre", "Valeurs de Référence", "Bilan"])
+    st.table(df_bio.set_index("Paramètre"))
+    pdf_data_store["14. Biologie"] = df_bio
+    
+    
     # --- GÉNÉRATION DU BOUTON PDF (FIN) ---
     with pdf_button_placeholder:
         pdf_bytes = create_pdf(p_info, pdf_data_store)
@@ -696,6 +767,7 @@ if poids_retenu > 0:
             mime="application/pdf",
             type="primary" 
         )
+
 
 
 
