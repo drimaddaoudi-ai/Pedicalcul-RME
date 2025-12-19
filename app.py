@@ -7,29 +7,62 @@ import datetime
 st.set_page_config(page_title="Pédicalcul CHU Fès", layout="wide", page_icon="👶")
 
 # ==========================================
-# 🔐 SÉCURITÉ : CODE PIN
+# 🔐 SÉCURITÉ : AUTHENTIFICATION PAR EMAIL
 # ==========================================
-# Définissez votre mot de passe ici
-MOT_DE_PASSE = "4321" 
 
-# Initialisation de l'état de la session (mémoire)
+# 1. LISTE DES UTILISATEURS AUTORISÉS
+# Format : "email": "mot_de_passe"
+# CONSEIL : Mettez des mots de passe un peu complexes
+UTILISATEURS = {
+    "imad.daoudi@usmba.ac.ma": "admin1234",
+    "interne1@usmba.ac.ma": "1234",
+    "interne2@usmba.ac.ma": "1234",
+    "infirmier@chu-fes.ma": "1234"
+}
+
+# Initialisation de l'état (mémoire)
 if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
+if 'user_email' not in st.session_state:
+    st.session_state.user_email = ""
 
-# Fonction de vérification
-def verifier_code():
-    if st.session_state.input_code == MOT_DE_PASSE:
-        st.session_state.authenticated = True
+def verifier_login():
+    email_input = st.session_state.email_input.lower().strip() # Nettoyage (minuscule/espace)
+    password_input = st.session_state.password_input
+    
+    if email_input in UTILISATEURS:
+        if UTILISATEURS[email_input] == password_input:
+            st.session_state.authenticated = True
+            st.session_state.user_email = email_input
+        else:
+            st.error("⛔ Mot de passe incorrect")
     else:
-        st.session_state.authenticated = False
-        st.error("⛔ Code d'accès incorrect")
+        st.error("⛔ Cet email n'est pas autorisé")
 
-# Si l'utilisateur n'est pas connecté, on affiche QUE la demande de code
+# Si non connecté, afficher le formulaire de login
 if not st.session_state.authenticated:
-    st.markdown("## 🔒 Accès Réservé - Réanimation Mère-Enfant")
-    st.text_input("Veuillez entrer le code d'accès :", type="password", key="input_code", on_change=verifier_code)
-    st.info("Cet outil est réservé au personnel de la Réanimation Mère Enfant (CHU Hassan II).")
-    st.stop()  # 🛑 Arrête tout le reste du script ici tant que le code n'est pas bon
+    col_lock1, col_lock2 = st.columns([1, 2])
+    with col_lock1:
+        try: st.image("logo.png", width=100)
+        except: pass
+    with col_lock2:
+        st.markdown("## 🔒 Connexion Sécurisée")
+        st.markdown("Service Réanimation Mère-Enfant - CHU Fès")
+        
+        st.text_input("Email Académique / Pro :", key="email_input")
+        st.text_input("Mot de passe :", type="password", key="password_input")
+        
+        st.button("Se connecter", on_click=verifier_login)
+        
+        st.info("Contactez Dr Imad Daoudi pour obtenir vos accès.")
+    
+    st.stop() # 🛑 Arrête l'application ici si pas connecté
+
+# Petit message de bienvenue dans la barre latérale une fois connecté
+st.sidebar.success(f"Connecté en tant que : {st.session_state.user_email}")
+if st.sidebar.button("Se déconnecter"):
+    st.session_state.authenticated = False
+    st.rerun()
 
 # ==========================================
 # 🏥 DÉBUT DE L'APPLICATION (Le reste de votre code suit ici...)
@@ -814,6 +847,7 @@ if poids_retenu > 0:
             mime="application/pdf",
             type="primary" 
         )
+
 
 
 
