@@ -54,7 +54,7 @@ if not st.session_state.authenticated:
         
         st.button("Se connecter", on_click=verifier_login)
         
-        st.info("Contactez nous pour obtenir vos accès.")
+        st.info("Contactez-nous pour obtenir votre accès.")
     
     st.stop() # 🛑 Arrête l'application ici si pas connecté
 
@@ -847,6 +847,7 @@ if poids_retenu > 0:
             mime="application/pdf",
             type="primary" 
         )
+
 
 
 
