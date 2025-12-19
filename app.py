@@ -49,12 +49,12 @@ if not st.session_state.authenticated:
         st.markdown("## 🔒 Connexion Sécurisée")
         st.markdown("Service Réanimation Mère-Enfant - CHU Fès")
         
-        st.text_input("Email Académique / Pro :", key="email_input")
+        st.text_input("Email :", key="email_input")
         st.text_input("Mot de passe :", type="password", key="password_input")
         
         st.button("Se connecter", on_click=verifier_login)
         
-        st.info("Contactez Dr Imad Daoudi pour obtenir vos accès.")
+        st.info("Contactez nous pour obtenir vos accès.")
     
     st.stop() # 🛑 Arrête l'application ici si pas connecté
 
@@ -847,6 +847,7 @@ if poids_retenu > 0:
             mime="application/pdf",
             type="primary" 
         )
+
 
 
 
